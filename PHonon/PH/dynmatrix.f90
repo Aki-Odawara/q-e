@@ -48,7 +48,7 @@ subroutine dynmatrix_new(iq_)
   !
   ! ... local variables
   !
-  integer :: nq, isq (48), imq, na, nt, imode0, jmode0, irr, jrr, &
+  integer :: nq, isq (48), imq, na, nb, nt, imode0, jmode0, irr, jrr, &
        ipert, jpert, mu, nu, i, j, nqq
   ! nq :  degeneracy of the star of q
   ! isq: index of q in the star of a given sym.op.
@@ -58,7 +58,16 @@ subroutine dynmatrix_new(iq_)
   ! list of vectors in the star of q
   real(DP), allocatable :: zstar(:,:,:)
   integer :: icart, jcart, ierr
+  integer :: isym, iqstar
   logical :: ldiag_loc
+
+  complex(DP), allocatable :: dyn_before(:,:), dyn_after(:,:), dyn_check(:,:)
+  complex(DP) :: block(3,3)
+
+  real(DP) :: norm_before, norm_after, norm_diff
+  real(DP) :: norm_idem
+  real(DP) :: norm_herm_before, norm_herm_after
+  real(DP) :: block_norm
   !
   call start_clock('dynmatrix')
   ldiag_loc=ldiag.OR.(nat_todo_input > 0).OR.all_comp
@@ -101,16 +110,175 @@ subroutine dynmatrix_new(iq_)
      enddo
   endif
 
-  !
+    !
   !   Symmetrizes the dynamical matrix w.r.t. the small group of q
   !
+  WRITE(stdout,*) ' '
+  WRITE(stdout,*) '================ DEBUG dynmatrix_new ================'
+  WRITE(stdout,*) 'DEBUG: current_iq = ', current_iq
+  WRITE(stdout,*) 'DEBUG: nat        = ', nat
+  WRITE(stdout,*) 'DEBUG: nmodes     = ', nmodes
+  WRITE(stdout,*) 'DEBUG: nsym       = ', nsym
+  WRITE(stdout,*) 'DEBUG: nsymq      = ', nsymq
+  WRITE(stdout,*) 'DEBUG: lgamma     = ', lgamma
+  WRITE(stdout,*) 'DEBUG: lgamma_gamma = ', lgamma_gamma
+  WRITE(stdout,*) 'DEBUG: minus_q    = ', minus_q
+  WRITE(stdout,*) 'DEBUG: irotmq     = ', irotmq
+  WRITE(stdout,'(A,3ES18.8)') 'DEBUG: xq = ', xq(1), xq(2), xq(3)
+
+  WRITE(stdout,*) ' '
+  WRITE(stdout,*) 'DEBUG: small-group operations used by QE'
+  DO isym = 1, nsymq
+     WRITE(stdout,*) 'DEBUG: ---- isym = ', isym, ' ----'
+     WRITE(stdout,*) 'DEBUG: s(:,:,isym)'
+     DO i = 1, 3
+        WRITE(stdout,'(3I8)') s(i,1,isym), s(i,2,isym), s(i,3,isym)
+     ENDDO
+
+     WRITE(stdout,*) 'DEBUG: irt(isym,na)'
+     DO na = 1, nat
+        WRITE(stdout,'(A,I5,A,I5)') 'DEBUG: atom ', na, ' -> ', irt(isym,na)
+     ENDDO
+
+     WRITE(stdout,*) 'DEBUG: rtau(:,isym,na)'
+     DO na = 1, nat
+        WRITE(stdout,'(A,I5,A,3ES18.8)') 'DEBUG: atom ', na, ' rtau = ', &
+             rtau(1,isym,na), rtau(2,isym,na), rtau(3,isym,na)
+     ENDDO
+  ENDDO
+
   IF (lgamma_gamma) THEN
+
+     allocate(dyn_before(size(dyn,1), size(dyn,2)))
+     allocate(dyn_after (size(dyn,1), size(dyn,2)))
+
+     dyn_before(:,:) = dyn(:,:)
+
+     norm_before = sqrt(sum(abs(dyn_before(:,:))**2))
+     norm_herm_before = sqrt(sum(abs(dyn_before(:,:) - &
+          conjg(transpose(dyn_before(:,:))))**2))
+
      CALL generate_dynamical_matrix (nat, nsym, s, invs, irt, at, bg, &
                        n_diff_sites, equiv_atoms, has_equivalent, dyn)
      IF (asr) CALL set_asr_c(nat,nasr,dyn)
+
+     dyn_after(:,:) = dyn(:,:)
+
+     norm_after = sqrt(sum(abs(dyn_after(:,:))**2))
+     norm_diff  = sqrt(sum(abs(dyn_after(:,:) - dyn_before(:,:))**2))
+     norm_herm_after = sqrt(sum(abs(dyn_after(:,:) - &
+          conjg(transpose(dyn_after(:,:))))**2))
+
+     WRITE(stdout,*) ' '
+     WRITE(stdout,*) 'DEBUG: gamma-gamma symmetrization'
+     WRITE(stdout,*) 'DEBUG: ||dyn_before|| = ', norm_before
+     WRITE(stdout,*) 'DEBUG: ||dyn_after || = ', norm_after
+     WRITE(stdout,*) 'DEBUG: ||after-before|| = ', norm_diff
+     IF (norm_before > 0.d0) THEN
+        WRITE(stdout,*) 'DEBUG: relative change = ', norm_diff / norm_before
+     ENDIF
+     WRITE(stdout,*) 'DEBUG: hermiticity before = ', norm_herm_before
+     WRITE(stdout,*) 'DEBUG: hermiticity after  = ', norm_herm_after
+
+     deallocate(dyn_before)
+     deallocate(dyn_after)
+
   ELSE
+
+     allocate(dyn_before(size(dyn,1), size(dyn,2)))
+     allocate(dyn_after (size(dyn,1), size(dyn,2)))
+     allocate(dyn_check (size(dyn,1), size(dyn,2)))
+
+     dyn_before(:,:) = dyn(:,:)
+
+     norm_before = sqrt(sum(abs(dyn_before(:,:))**2))
+     norm_herm_before = sqrt(sum(abs(dyn_before(:,:) - &
+          conjg(transpose(dyn_before(:,:))))**2))
+
+     WRITE(stdout,*) ' '
+     WRITE(stdout,*) 'DEBUG: before symdyn_munu_new'
+     WRITE(stdout,*) 'DEBUG: ||dyn_before|| = ', norm_before
+     WRITE(stdout,*) 'DEBUG: hermiticity before = ', norm_herm_before
+
      CALL symdyn_munu_new (dyn, u, xq, s, invs, rtau, irt, at, bg, &
           nsymq, nat, irotmq, minus_q)
+
+     dyn_after(:,:) = dyn(:,:)
+
+     norm_after = sqrt(sum(abs(dyn_after(:,:))**2))
+     norm_diff  = sqrt(sum(abs(dyn_after(:,:) - dyn_before(:,:))**2))
+     norm_herm_after = sqrt(sum(abs(dyn_after(:,:) - &
+          conjg(transpose(dyn_after(:,:))))**2))
+
+     WRITE(stdout,*) ' '
+     WRITE(stdout,*) 'DEBUG: after symdyn_munu_new'
+     WRITE(stdout,*) 'DEBUG: ||dyn_after|| = ', norm_after
+     WRITE(stdout,*) 'DEBUG: ||after-before|| = ', norm_diff
+     IF (norm_before > 0.d0) THEN
+        WRITE(stdout,*) 'DEBUG: relative symdyn change = ', norm_diff / norm_before
+     ENDIF
+     WRITE(stdout,*) 'DEBUG: hermiticity after = ', norm_herm_after
+
+     !
+     ! Idempotency check: symdyn(symdyn(D)) - symdyn(D)
+     !
+     dyn_check(:,:) = dyn_after(:,:)
+
+     CALL symdyn_munu_new (dyn_check, u, xq, s, invs, rtau, irt, at, bg, &
+          nsymq, nat, irotmq, minus_q)
+
+     norm_idem = sqrt(sum(abs(dyn_check(:,:) - dyn_after(:,:))**2))
+
+     WRITE(stdout,*) ' '
+     WRITE(stdout,*) 'DEBUG: idempotency check'
+     WRITE(stdout,*) 'DEBUG: ||symdyn(after)-after|| = ', norm_idem
+     IF (norm_after > 0.d0) THEN
+        WRITE(stdout,*) 'DEBUG: relative idempotency error = ', &
+             norm_idem / norm_after
+     ENDIF
+
+     !
+     ! 3x3 atom-pair blocks after symmetrization.
+     ! dyn is a 2D matrix: dyn(mu,nu), where
+     ! mu = 3*(na-1) + icart
+     ! nu = 3*(nb-1) + jcart
+     !
+     WRITE(stdout,*) ' '
+     WRITE(stdout,*) 'DEBUG: 3x3 atom-pair blocks after symdyn_munu_new'
+
+     DO na = 1, nat
+        DO nb = 1, nat
+
+           DO icart = 1, 3
+              DO jcart = 1, 3
+                 mu = 3 * (na - 1) + icart
+                 nu = 3 * (nb - 1) + jcart
+                 block(icart,jcart) = dyn_after(mu,nu)
+              ENDDO
+           ENDDO
+
+           block_norm = sqrt(sum(abs(block(:,:))**2))
+
+           WRITE(stdout,*) ' '
+           WRITE(stdout,'(A,I5,A,I5,A,ES18.8)') &
+                'DEBUG: block na = ', na, ' nb = ', nb, &
+                ' norm = ', block_norm
+
+           WRITE(stdout,*) 'DEBUG: block rows: Re(1) Im(1) Re(2) Im(2) Re(3) Im(3)'
+           DO icart = 1, 3
+              WRITE(stdout,'(6ES18.8)') &
+                   real(block(icart,1)), aimag(block(icart,1)), &
+                   real(block(icart,2)), aimag(block(icart,2)), &
+                   real(block(icart,3)), aimag(block(icart,3))
+           ENDDO
+
+        ENDDO
+     ENDDO
+
+     deallocate(dyn_before)
+     deallocate(dyn_after)
+     deallocate(dyn_check)
+
   ENDIF
   !
   !  if only one mode is computed write the dynamical matrix and stop
@@ -140,10 +308,25 @@ subroutine dynmatrix_new(iq_)
      ENDDO
      ldiag_loc=.TRUE.
   ENDIF
-  !
+    !
   !   Generates the star of q
   !
   call star_q1(xq, at, bg, nsym, s, invs, nq, sxq, isq, imq, .TRUE., t_rev )
+
+  WRITE(stdout,*) ' '
+  WRITE(stdout,*) 'DEBUG: star of q'
+  WRITE(stdout,*) 'DEBUG: nq  = ', nq
+  WRITE(stdout,*) 'DEBUG: imq = ', imq
+
+  DO iqstar = 1, nq
+     WRITE(stdout,'(A,I5,A,3ES18.8)') 'DEBUG: sxq(:,', iqstar, ') = ', &
+          sxq(1,iqstar), sxq(2,iqstar), sxq(3,iqstar)
+  ENDDO
+
+  WRITE(stdout,*) 'DEBUG: isq for all space-group operations'
+  DO isym = 1, nsym
+     WRITE(stdout,'(A,I5,A,I5)') 'DEBUG: isym = ', isym, ' isq = ', isq(isym)
+  ENDDO
   !
   ! write on file information on the system
   !
@@ -164,8 +347,18 @@ subroutine dynmatrix_new(iq_)
   !
   !   Rotates and writes on iudyn the dynamical matrices of the star of q
   !
+  WRITE(stdout,*) ' '
+  WRITE(stdout,*) 'DEBUG: calling q2qstar_ph'
+  WRITE(stdout,*) 'DEBUG: dyn passed to q2qstar_ph is the symmetrized dyn at xq'
+  WRITE(stdout,'(A,3ES18.8)') 'DEBUG: xq passed to q2qstar_ph = ', &
+       xq(1), xq(2), xq(3)
+
   call q2qstar_ph (dyn, at, bg, nat, nsym, s, invs, irt, rtau, &
        nq, sxq, isq, imq, iudyn)
+
+  WRITE(stdout,*) 'DEBUG: returned from q2qstar_ph'
+  WRITE(stdout,*) '====================================================='
+  WRITE(stdout,*) ' '
 
   !
   !   Writes (if the case) results for quantities involving electric field

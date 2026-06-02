@@ -262,12 +262,12 @@ PROGRAM matdyn
      nk3 = 0
      asr  ='no'
      readtau=.FALSE.
-     flfrc=' '
+     flfrc=''
      fldos='matdyn.dos'
      flfrq='matdyn.freq'
      flvec='matdyn.modes'
-     fleig=' '
-     fldyn=' '
+     fleig='matdyn.eig'
+     fldyn='matdyn.dyn'
      fltau=' '
      fildyn = ' '
      fildyn_prefix = ' '

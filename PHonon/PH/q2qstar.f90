@@ -171,11 +171,16 @@ PROGRAM Q2QSTAR
   CALL sgam_lr(at, bg, nsym, s, irt, tau, rtau, nat)
   !
   ! ######################### star of q #########################
+  write(*,*) "Before trntnsc="
+  write(*, '(6F10.5)') phi
   do na = 1, nat
      do nb = 1, nat
         call trntnsc (phi (1, 1, na, nb), at, bg, - 1)
      enddo
   enddo
+  write(*,*) "After trntnsc="
+  write(*, '(6F10.5)') phi
+  write(*, *) "component(0,1,0,1)=", phi(1, 2, 1, 2)
   CALL symdynph_gq_new (xq, phi, s, invs, rtau, irt, nsymq, nat, &
        irotmq, minus_q)
   do na = 1, nat

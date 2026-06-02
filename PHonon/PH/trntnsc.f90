@@ -57,6 +57,7 @@ subroutine trntnsc (phi, at, bg, iflg)
      !
      ! backward transformation (cartesian to crystal axis)
      !
+     write(*, *) "primitive=", at
      do i = 1, 3
         do j = 1, 3
            wrk (i, j) = (0.d0, 0.d0)

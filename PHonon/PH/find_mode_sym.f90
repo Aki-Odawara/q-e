@@ -202,6 +202,8 @@ SUBROUTINE find_mode_sym_new (u, w2, tau, nat, nsym, s, sr, irt, xq,    &
            !         write(6,*) igroup, irap, iclass, which_irr(iclass)
         ENDDO
         times=times/nsym
+        WRITE(stdout, &
+        '(/,5x, "Multiplicity, ", f12.1,2x)') times
 !
 !   times must be a positive integer or zero, otherwise some error occured
 !   somewhere
