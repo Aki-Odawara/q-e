@@ -189,6 +189,31 @@ NAMELIST: &INPUTPH
    Description:    File where the the potential variation is written
                    (for later use in electron-phonon calculation, see also fildrho).
    +--------------------------------------------------------------------
+
+   +--------------------------------------------------------------------
+   Variable:       filpattern
+
+   Type:           CHARACTER
+   Default:        ' '
+   Description:    File where the displacement pattern basis is written. Each pattern is
+                   printed as Cartesian atomic-displacement components. The patterns are
+                   constructed by diagonalizing the little-group symmetrized random matrix;
+                   symmetry operations are applied internally in crystal coordinates, but the
+                   stored pattern vectors are Cartesian. If "ldisp" or "qplot" is .true.,
+                   the q-point index is appended to the file name.
+   +--------------------------------------------------------------------
+
+   +--------------------------------------------------------------------
+   Variable:       fildynpattern
+
+   Type:           CHARACTER
+   Default:        ' '
+   Description:    File where the dynamical matrix projected onto the pattern basis is
+                   written. The final-symmetrized Cartesian dynamical matrix is projected
+                   back onto the pattern basis before being dumped. If "ldisp" or "qplot"
+                   is .true., the q-point index is appended to the file name.
+   +--------------------------------------------------------------------
+   
    
    +--------------------------------------------------------------------
    Variable:       epsil

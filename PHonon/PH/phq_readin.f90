@@ -35,7 +35,7 @@ SUBROUTINE phq_readin()
                             last_irr, start_q, last_q, current_iq, tmp_dir_ph, &
                             ext_recover, ext_restart, u_from_file, ldiag, &
                             search_sym, lqdir, electron_phonon, tmp_dir_phq, &
-                            qplot, only_init, only_wfc, &
+                            qplot, only_init, only_wfc, filpattern, fildynpattern, &
                             low_directory_check, nk1, nk2, nk3, k1, k2, k3, &
                             dftd3_hess
   USE save_ph,       ONLY : tmp_dir_save, save_ph_input_variables
@@ -112,10 +112,10 @@ SUBROUTINE phq_readin()
   LOGICAL :: needwf_ph=.TRUE.
   !
   NAMELIST / INPUTPH / tr2_ph, amass, alpha_mix, niter_ph, nmix_ph,  &
-                       nat_todo, verbosity, iverbosity, outdir, epsil,  &
+                       nat_todo, verbosity, iverbosity, outdir, epsil, &
                        trans,  zue, zeu, max_seconds, reduce_io, &
                        modenum, prefix, fildyn, fildvscf, fildrho, &
-                       ldisp, nq1, nq2, nq3, &
+                       filpattern, fildynpattern, ldisp, nq1, nq2, nq3, &
                        eth_rps, eth_ns, lraman, elop, dek, recover,  &
                        fpol, asr, lrpa, lnoloc, start_irr, last_irr, &
                        start_q, last_q, nogg, ldiag, search_sym, lqdir, &
@@ -153,6 +153,8 @@ SUBROUTINE phq_readin()
   ! fildyn       : output file for the dynamical matrix
   ! fildvscf     : output file containing deltavsc
   ! fildrho      : output file containing deltarho
+  ! filpattern   : output file for the displacement pattern basis
+  ! fildynpattern: output file for the dynamical matrix in the pattern basis
   ! fildrho_dir  : directory where fildrho files will be stored (default: outdir or ESPRESSO_FILDRHO_DIR variable)
   ! eth_rps      : threshold for calculation of  Pc R |psi> (Raman)
   ! eth_ns       : threshold for non-scf wavefunction calculation (Raman)
@@ -282,6 +284,8 @@ SUBROUTINE phq_readin()
   fildrho      = ' '
   fildvscf     = ' '
   dftd3_hess   = ' '
+  filpattern   = ' '
+  fildynpattern= ' '
   ldisp        = .FALSE.
   nq1          = 0
   nq2          = 0

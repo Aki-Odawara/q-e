@@ -17,7 +17,7 @@ subroutine dynmatrix_new(iq_)
   USE kinds,         ONLY : DP
   USE constants,     ONLY : FPI, BOHR_RADIUS_ANGS
   USE ions_base,     ONLY : nat, ntyp => nsp, ityp, tau, atm, amass, zv
-  USE io_global,     ONLY : stdout
+  USE io_global,     ONLY : stdout, ionode
   USE control_flags, ONLY : modenum
   USE cell_base,     ONLY : at, bg, celldm, ibrav, omega
   USE symm_base,     ONLY : s, sr, irt, nsym, invs, t_rev
@@ -30,7 +30,7 @@ subroutine dynmatrix_new(iq_)
   USE disp,          ONLY : omega_disp
   USE control_ph,    ONLY : epsil, zue, search_sym, ldisp, &
                             done_zue, always_run, ldiag, done_epsil, done_zeu, xmldyn, &
-                            current_iq, qplot
+                            current_iq, qplot, fildynpattern
   USE ph_restart,    ONLY : ph_writefile
   USE partial,       ONLY : all_comp, comp_irr, done_irr, nat_todo_input
   USE units_ph,      ONLY : iudyn
@@ -57,6 +57,7 @@ subroutine dynmatrix_new(iq_)
   real(DP) :: sxq (3, 48), work(3)
   ! list of vectors in the star of q
   real(DP), allocatable :: zstar(:,:,:)
+  complex(DP), allocatable :: dyn_pattern(:,:)
   integer :: icart, jcart, ierr
   integer :: isym, iqstar
   logical :: ldiag_loc
@@ -110,7 +111,9 @@ subroutine dynmatrix_new(iq_)
      enddo
   endif
 
-    !
+!  IF (TRIM(fildynpattern) /= ' ') CALL write_dyn_pattern_basis_out(fildynpattern)
+
+  !
   !   Symmetrizes the dynamical matrix w.r.t. the small group of q
   !
   WRITE(stdout,*) ' '
@@ -279,6 +282,16 @@ subroutine dynmatrix_new(iq_)
      deallocate(dyn_after)
      deallocate(dyn_check)
 
+  ENDIF
+  IF (TRIM(fildynpattern) /= ' ') THEN
+     ALLOCATE(dyn_pattern(3*nat, 3*nat))
+     dyn_pattern = (0.d0, 0.d0)
+     CALL rotate_pattern_add(nat, u, dyn_pattern, dyn)
+   !  CALL write_dyn_pattern_basis_out(fildynpattern, dyn_pattern)
+     DEALLOCATE(dyn_pattern)
+  ENDIF
+  IF (TRIM(fildynpattern) /= ' ' .AND. ionode) THEN
+     CALL write_dyn_pattern_basis_out(fildynpattern)
   ENDIF
   !
   !  if only one mode is computed write the dynamical matrix and stop

@@ -21,7 +21,7 @@ subroutine bcast_ph_input ( )
                          lnoloc, recover, ldisp, zue, zeu, epsil, trans, &
                          ldiag, lqdir, search_sym,  electron_phonon, &
                          qplot, only_init, only_wfc, low_directory_check,&
-                         nk1, nk2, nk3, k1, k2, k3
+                         nk1, nk2, nk3, k1, k2, k3, filpattern, fildynpattern
   USE gamma_gamma, ONLY : asr
   USE disp, ONLY : nq1, nq2, nq3
   USE partial, ONLY : nat_todo
@@ -128,6 +128,8 @@ subroutine bcast_ph_input ( )
   call mp_bcast (fildyn, meta_ionode_id, world_comm )
   call mp_bcast (fildvscf, meta_ionode_id, world_comm )
   call mp_bcast (fildrho, meta_ionode_id, world_comm )
+  call mp_bcast (filpattern, meta_ionode_id, world_comm )
+  call mp_bcast (fildynpattern, meta_ionode_id, world_comm )
   call mp_bcast (tmp_dir, meta_ionode_id, world_comm )
   call mp_bcast (prefix, meta_ionode_id, world_comm )
   call mp_bcast (electron_phonon, meta_ionode_id, world_comm )

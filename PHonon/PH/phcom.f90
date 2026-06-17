@@ -243,6 +243,10 @@ MODULE control_ph
   !
   CHARACTER(LEN=12) :: electron_phonon
   CHARACTER(LEN=256) :: tmp_dir_ph, tmp_dir_phq
+  CHARACTER(LEN=256) :: filpattern
+  !! output file for the displacement pattern basis
+  CHARACTER(LEN=256) :: fildynpattern
+  !! output file for the dynamical matrix in the pattern basis
   LOGICAL :: epsil
   !! if TRUE computes dielec. const and eff. charges
   LOGICAL :: done_epsil=.FALSE.

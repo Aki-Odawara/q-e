@@ -70,7 +70,8 @@ subroutine phq_setup
   USE nlcc_ph,       ONLY : drc
   USE control_ph,    ONLY : search_sym, start_irr, &
                             last_irr, all_done,  trans, epsil, recover, &
-                            done_epsil, zeu, done_zeu, current_iq, u_from_file
+                            done_epsil, zeu, done_zeu, current_iq, &
+                            u_from_file, filpattern
   USE el_phon,       ONLY : elph, comp_elph, done_elph, elph_nbnd_min, elph_nbnd_max
   USE output,        ONLY : fildrho
   USE modes,         ONLY : u, npertx, npert, nirr, t, tmq, nmodes, num_rap_mode
@@ -262,6 +263,7 @@ subroutine phq_setup
      CALL ph_writefile('data_u',current_iq,0,ierr)
   ENDIF
   CALL find_irrep_sym()
+  IF (TRIM(filpattern) /= ' ') CALL write_pattern_basis_out(filpattern)
 
 
   IF (lgamma_gamma) THEN

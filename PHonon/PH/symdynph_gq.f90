@@ -234,14 +234,14 @@ subroutine symdynph_gq_new( xq, phi, s, invs, rtau, irt, nsymq, &
               irot = isymq
               sna = irt (irot, na)
               snb = irt (irot, nb)
-!              write(*, *) "rotational index:", irot, "before:", na, "after:", sna
-!              write(*, *) "rotational index:", irot, "before:", nb, "after:", snb
+              write(*, *) "rotational index:", irot, "before:", na, "after:", sna
+              write(*, *) "rotational index:", irot, "before:", nb, "after:", snb
               arg = 0.d0
               do ipol = 1, 3
                  arg = arg + (xq (ipol) * (rtau(ipol, irot, na) - &
                                            rtau(ipol, irot, nb) ) )
-                 write(*, *) "position of na=", rtau(ipol, irot, na)
-                 write(*, *) "position of nb=", rtau(ipol, irot, nb)
+                 write(*, *) "cell return vector of na=", rtau(ipol, irot, na)
+                 write(*, *) "cell return vector of nb=", rtau(ipol, irot, nb)
                  write(*, *) "difference btw unit cell=", rtau(ipol, irot, na) - &
                                                           rtau(ipol, irot, nb)
                  write(*, *) "component of wavevec.=", xq(ipol)
@@ -339,7 +339,7 @@ subroutine symdynph_gq_new( xq, phi, s, invs, rtau, irt, nsymq, &
               arg = arg + xq(ipol) * &
                    (rtau(ipol, irot, na) - rtau(ipol, irot, nb))
            enddo
-           arg = arg * tpi
+           arg = arg
            fase = CMPLX(cos(arg), sin(arg), kind=DP)
 
            do ipol = 1, 3

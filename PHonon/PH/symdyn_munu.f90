@@ -46,7 +46,7 @@ subroutine symdyn_munu_new( dyn, u, xq, s, invs, rtau, irt, at, &
   !
   ! ... local variables
   !
-  integer :: i, j, icart, jcart, na, nb, mu, nu
+  integer :: i, j, icart, jcart, na, nb, mu, nu, imode
   ! counter on modes
   ! counter on modes
   ! counter on cartesian coordinates
@@ -63,6 +63,34 @@ subroutine symdyn_munu_new( dyn, u, xq, s, invs, rtau, irt, at, &
   ! First we transform in the cartesian coordinates
   !
   CALL dyn_pattern_to_cart(nat, u, dyn, phi)
+  !
+  ! Dump the atomic displacement basis used to expand the patterns.
+  ! The compound index imode labels the unit displacement of atom na
+  ! along Cartesian direction icart. The columns of u are the pattern
+  ! basis vectors written in this atomic displacement basis.
+  !
+  WRITE(*,*) '### symdyn_munu: atomic displacement basis'
+  WRITE(*,*) '###   imode = 3 * (na - 1) + icart'
+  DO na = 1, nat
+     DO icart = 1, 3
+        imode = 3 * (na - 1) + icart
+        WRITE(*,'(A,I6,A,I6,A,I2)') &
+             '###   basis index imode=', imode, ' atom na=', na, &
+             ' cartesian direction icart=', icart
+     ENDDO
+  ENDDO
+  WRITE(*,*) '### symdyn_munu: pattern basis in atomic displacement basis, u(imode,mu)'
+  DO mu = 1, 3 * nat
+     WRITE(*,'(A,I6)') '###   pattern mu=', mu
+     DO na = 1, nat
+        DO icart = 1, 3
+           imode = 3 * (na - 1) + icart
+           WRITE(*,'(A,I6,A,I6,A,I2,A,2ES22.14)') &
+                '###     imode=', imode, ' atom na=', na, &
+                ' icart=', icart, ' u=', u(imode, mu)
+        ENDDO
+     ENDDO
+  ENDDO
   !
   ! Then we transform to the crystal axis
   !
