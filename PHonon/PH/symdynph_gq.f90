@@ -234,24 +234,28 @@ subroutine symdynph_gq_new( xq, phi, s, invs, rtau, irt, nsymq, &
               irot = isymq
               sna = irt (irot, na)
               snb = irt (irot, nb)
-              write(*, *) "rotational index:", irot, "before:", na, "after:", sna
-              write(*, *) "rotational index:", irot, "before:", nb, "after:", snb
+              write(*, '(A)') ""
+              write(*, '(A, I4, A, I4, A, I4)') &
+                   "symdynph_gq: atoms na=", na, ", nb=", nb, ", isymq=", isymq
+              write(*, '(A, I4, A, I4, A, I4)') &
+                   "  rotation: irot=", irot, ", na->", sna, ", nb->", snb
+              write(*, '(A)') &
+                   "  ipol        xq(ipol)        rtau(na)        rtau(nb)           delta    xq*delta"
               arg = 0.d0
               do ipol = 1, 3
+                 write(*, '(2X, I4, 5(1X, ES16.8))') ipol, xq(ipol), &
+                      rtau(ipol, irot, na), rtau(ipol, irot, nb), &
+                      rtau(ipol, irot, na) - rtau(ipol, irot, nb), &
+                      xq(ipol) * (rtau(ipol, irot, na) - rtau(ipol, irot, nb))
                  arg = arg + (xq (ipol) * (rtau(ipol, irot, na) - &
                                            rtau(ipol, irot, nb) ) )
-                 write(*, *) "cell return vector of na=", rtau(ipol, irot, na)
-                 write(*, *) "cell return vector of nb=", rtau(ipol, irot, nb)
-                 write(*, *) "difference btw unit cell=", rtau(ipol, irot, na) - &
-                                                          rtau(ipol, irot, nb)
-                 write(*, *) "component of wavevec.=", xq(ipol)
               enddo
-              write(*, *) "arg=", arg
+              write(*, '(A, ES16.8)') "  argument before 2*pi = ", arg
               arg = arg * tpi
-              write(*, *) "atoms number=", na, "and", nb
-              write(*, *) "argument=", arg
               faseq (isymq) = CMPLX(cos (arg), sin (arg) ,kind=DP)
-              write(*, *) "fase factor=", faseq(isymq)
+              write(*, '(A, ES16.8)') "  argument [rad]     = ", arg
+              write(*, '(A, "(", ES16.8, ",", 1X, ES16.8, ")")') &
+                   "  phase factor      = ", DBLE(faseq(isymq)), AIMAG(faseq(isymq))
               do ipol = 1, 3
                  do jpol = 1, 3
                     do kpol = 1, 3
@@ -293,7 +297,7 @@ subroutine symdynph_gq_new( xq, phi, s, invs, rtau, irt, nsymq, &
                  enddo
               enddo
               iflb (sna, snb) = 1
-              write(*, *) "inverse=", invs(irot)
+              write(*, '(A, I4, A, I4)') "symdynph_gq: isymq=", isymq, ", inverse rotation=", invs(irot)
            enddo
         endif
      enddo
